@@ -43,7 +43,7 @@ data:
   #     images/train/  images/val/  images/test/
   #     labels/train/  labels/val/  labels/test/
   yaml_path: data/instrument_cluster/data.yaml
-  image_size: 640              # Input resolution; 800 also works for smaller icons
+  image_size: 800              # Input resolution; 800 also works for smaller icons
   # 19-class industrial taxonomy  (index = YOLO label id)
   # ---- CRITICAL (Red) ---------------------------------------------------
   class_names:
@@ -73,22 +73,24 @@ data:
 # Training schedule
 # ---------------------------------------------------------------------------
 training:
-  epochs: 100
+  epochs: 300
   batch_size: 16
-  patience: 20                 # Early stopping: halt if mAP50 does not improve
+  patience: 50                 # Early stopping: halt if mAP50 does not improve
   val_period: 1                # Run validation every N epochs
 
   # -------------------------------------------------------------------------
   # YOLO-native kwargs -- passed directly into model.train(**kwargs)
   # -------------------------------------------------------------------------
   yolo_kwargs:
+    freeze: 10                 # Freeze the first 10 layers (backbone) to prevent overfitting
 
     # --- Optimizer & Learning Rate -------------------------------------------
     optimizer: AdamW           # AdamW generalises better than SGD on small datasets
     lr0: 0.001                 # Initial LR; lower than SGD default for AdamW stability
     lrf: 0.01                  # Final LR = lr0 * lrf (cosine decay target)
     momentum: 0.937            # SGD momentum / AdamW beta1
-    weight_decay: 0.0005       # L2 regularization
+    weight_decay: 0.005        # Stronger L2 regularization for small dataset
+    dropout: 0.1               # Dropout for additional regularization
     warmup_epochs: 3.0         # Linear warm-up to avoid early divergence
     warmup_momentum: 0.8       # Momentum at end of warm-up
     cos_lr: true               # Enable cosine LR decay schedule
@@ -122,13 +124,13 @@ training:
 
     # Other geometric augmentations.
     degrees: 5.0               # Small rotation -- clusters are mostly upright
-    scale: 0.5                 # Scale jitter +/-50% -- icon size varies across clusters
+    scale: 0.2                 # Scale jitter +/-20% -- prevents small icons from disappearing
     translate: 0.1             # +/-10% translation
     perspective: 0.0003        # Very slight perspective warp
     shear: 0.0                 # No shear -- preserves icon shape fidelity
 
     # Copy-paste and erasing (off by default; enable if dataset is very small)
-    copy_paste: 0.0
+    copy_paste: 0.2
     erasing: 0.0
 
     # --- Validation & Saving -------------------------------------------------
